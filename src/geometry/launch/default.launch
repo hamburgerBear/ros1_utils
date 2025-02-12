@@ -1,0 +1,7 @@
+<launch>
+  <master auto="start"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find geometry)/maps/empty.yaml" respawn="false" />
+  <node pkg="geometry" type="geometry_node" name="geometry_node" respawn="false" />
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find geometry)/cfg/default.rviz" respawn="false" />
+</launch>
