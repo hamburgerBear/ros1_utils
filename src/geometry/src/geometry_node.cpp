@@ -7,8 +7,13 @@
 
 #include <Eigen/Eigen>
 
+#include "clipper2/clipper.h"
+#include "clipper2/clipper.version.h"
+
 ros::Publisher marker_pub, expanded_marker_pub;
 std::vector<Eigen::Vector2d> points, expanded_points;
+std::string expand_method_;
+double expand_distance_;
 
 void publishMaker(const ros::Publisher& pub,
                   const std::vector<Eigen::Vector2d>& points,
@@ -110,6 +115,35 @@ void expandPointsSimple(const std::vector<Eigen::Vector2d>& points,
   }
 }
 
+void expandPointsClipper2(const std::vector<Eigen::Vector2d>& points,
+                          const double& expand_distance,
+                          std::vector<Eigen::Vector2d>& expanded_points) {
+  using namespace Clipper2Lib;
+  std::cout << "Current Clipper2 Version = " << CLIPPER2_VERSION << std::endl;
+  PathsD paths, inflated_paths;
+  PathD path;
+  PointD point;
+  for (int i = 0; i < points.size(); ++i) {
+    point = PointD(points[i].x(), points[i].y());
+    path.push_back(point);
+  }
+
+  paths.push_back(path);
+  inflated_paths =
+      InflatePaths(paths, expand_distance, JoinType::Miter, EndType::Polygon);
+
+  if (inflated_paths.empty()) {
+    ROS_WARN("Use Clipper2 expanded points fail.");
+    return;
+  }
+
+  expanded_points.clear();
+  for (const auto& point : inflated_paths[0]) {
+    Eigen::Vector2d expanded_point = Eigen::Vector2d(point.x, point.y);
+    expanded_points.push_back(expanded_point);
+  }
+}
+
 void pointCallback(const geometry_msgs::PointStamped::ConstPtr& msg) {
   ROS_INFO("Received point: (%f, %f, %f)", msg->point.x, msg->point.y,
            msg->point.z);
@@ -119,7 +153,18 @@ void pointCallback(const geometry_msgs::PointStamped::ConstPtr& msg) {
 
 void goalCallback(const geometry_msgs::PoseStamped::ConstPtr& msg) {
   ROS_INFO("Received goal");
-  expandPointsSimple(points, 0.15, expanded_points);
+
+  if (expand_method_ == "simple")
+    expandPointsSimple(points, expand_distance_, expanded_points);
+  else if (expand_method_ == "clipper2")
+    expandPointsClipper2(points, expand_distance_, expanded_points);
+  else {
+    ROS_WARN(
+        "The current method(%s) is invalid, please choose correct expand "
+        "method",
+        expand_method_.c_str());
+  }
+
   publishMaker(expanded_marker_pub, expanded_points, {0.0, 1.0, 0.0, 1.0});
 }
 
@@ -133,6 +178,11 @@ void initialCallback(
 int main(int argc, char** argv) {
   ros::init(argc, argv, "geometry_node");
   ros::NodeHandle n;
+  ros::NodeHandle private_nh("~");
+
+  private_nh.param("expand_method", expand_method_, std::string("simple"));
+  private_nh.param("expand_distance", expand_distance_, 0.05);
+
   marker_pub = n.advertise<visualization_msgs::Marker>("/marker", 10);
   expanded_marker_pub =
       n.advertise<visualization_msgs::Marker>("/expanded_marker", 10);

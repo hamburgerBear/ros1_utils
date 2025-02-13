@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(geometry)
 
+set(CLIPPER2_PATH ${CMAKE_CURRENT_SOURCE_DIR}/thirdlibs/Clipper2/CPP/install)
+# 注意：如何依赖三方库的依赖关系？
+# add_subdirectory(thirdlibs/Clipper2/CPP)
+
 ## Compile as C++11, supported in ROS Kinetic and newer
-# add_compile_options(-std=c++11)
+add_compile_options(-std=c++17)
+
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -119,6 +124,7 @@ include_directories(
 # include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
+  ${CLIPPER2_PATH}/include
 )
 
 ## Declare a C++ library
@@ -149,6 +155,7 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
+  ${CLIPPER2_PATH}/lib/libClipper2.so
 )
 
 #############
@@ -193,7 +200,7 @@ install(FILES
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
 
-install(DIRECTORY launch
+install(DIRECTORY launch maps cfg
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
 
 #############
