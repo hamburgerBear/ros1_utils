@@ -2,8 +2,8 @@
 
 **geometry** 集合了几何多边形操作方法。
 <p align="center">
-  <img src="media/expandPointsSimple.gif" width = "400" height = "225"/>
-  <img src="media/expandPointsClipper2.gif" width = "400" height = "225"/>
+  <!-- <img src="media/expandPointsSimple.gif" width = "400" height = "225"/> -->
+  <img src="media/expandPointsClipper2.gif" width = "800" height = "540"/>
 </p>
 
 ## 目录
